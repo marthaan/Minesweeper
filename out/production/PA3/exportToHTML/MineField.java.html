@@ -1,0 +1,257 @@
+<html>
+<head>
+<title>MineField.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #8c8c8c; font-style: italic;}
+.s1 { color: #080808;}
+.s2 { color: #0033b3;}
+.s3 { color: #1750eb;}
+.s4 { color: #8c8c8c; font-style: italic;}
+.s5 { color: #067d17;}
+.s6 { color: #0037a6;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+MineField.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Name: Martha Ann Williams</span>
+<span class="s0">// USC NetID: marthaan</span>
+<span class="s0">// CS 455 PA3</span>
+<span class="s0">// Fall 2023</span>
+
+<span class="s2">import </span><span class="s1">java.util.Arrays;</span>
+<span class="s2">import </span><span class="s1">java.util.Random;</span>
+
+<span class="s0">/** </span>
+   <span class="s0">MineField</span>
+      <span class="s0">Class with locations of mines for a minesweeper game.</span>
+      <span class="s0">This class is mutable, because we sometimes need to change it once it's created.</span>
+      <span class="s0">Mutators: populateMineField, resetEmpty</span>
+      <span class="s0">Includes convenience method to tell the number of mines adjacent to a location.</span>
+ <span class="s0">*/</span>
+<span class="s2">public class </span><span class="s1">MineField {</span>
+   <span class="s2">private boolean</span><span class="s1">[][] minefieldData;</span>
+   <span class="s2">private int </span><span class="s1">mines = </span><span class="s3">0</span><span class="s1">;</span>
+   <span class="s2">private int </span><span class="s1">mineRow;</span>
+   <span class="s2">private int </span><span class="s1">mineCol;</span>
+   
+   <span class="s0">/**</span>
+      <span class="s0">Create a minefield with same dimensions as the given array, and populate it with the mines in</span>
+      <span class="s0">the array such that if mineData[row][col] is true, then hasMine(row,col) will be true and vice</span>
+      <span class="s0">versa.  numMines() for this minefield will correspond to the number of 'true' values in</span>
+      <span class="s0">mineData.</span>
+      <span class="s4">@param </span><span class="s0">mineData  the data for the mines; must have at least one row and one col,</span>
+                       <span class="s0">and must be rectangular (i.e., every row is the same length)</span>
+    <span class="s0">*/</span>
+   <span class="s2">public </span><span class="s1">MineField(</span><span class="s2">boolean</span><span class="s1">[][] mineData) {</span>
+      <span class="s2">int </span><span class="s1">rows = mineData.length;</span>
+      <span class="s2">int </span><span class="s1">cols = mineData[</span><span class="s3">0</span><span class="s1">].length;</span>
+
+      <span class="s2">assert </span><span class="s1">rows != </span><span class="s3">0 </span><span class="s1">&amp;&amp; cols != </span><span class="s3">0</span><span class="s1">;</span>
+      <span class="s2">assert </span><span class="s1">rows == cols;</span>
+
+      <span class="s1">minefieldData = </span><span class="s2">new boolean</span><span class="s1">[rows][cols];</span>
+
+      <span class="s1">mineRow = rows;</span>
+      <span class="s1">mineCol = cols;</span>
+
+         <span class="s2">for </span><span class="s1">(</span><span class="s2">int </span><span class="s1">i = </span><span class="s3">0</span><span class="s1">; i &lt; rows; i++) {</span>
+            <span class="s2">for </span><span class="s1">(</span><span class="s2">int </span><span class="s1">j = </span><span class="s3">0</span><span class="s1">; j &lt; cols; j++) {</span>
+               <span class="s1">minefieldData[i][j] = mineData[i][j];</span>
+               <span class="s2">if </span><span class="s1">(mineData[i][j] == </span><span class="s2">true</span><span class="s1">) {</span>
+                  <span class="s1">mines += </span><span class="s3">1</span><span class="s1">;</span>
+               <span class="s1">}</span>
+            <span class="s1">}</span>
+         <span class="s1">}</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Create an empty minefield (i.e. no mines anywhere), that may later have numMines mines (once </span>
+      <span class="s0">populateMineField is called on this object).  Until populateMineField is called on such a </span>
+      <span class="s0">MineField, numMines() will not correspond to the number of mines currently in the MineField.</span>
+      <span class="s4">@param </span><span class="s0">numRows  number of rows this minefield will have, must be positive</span>
+      <span class="s4">@param </span><span class="s0">numCols  number of columns this minefield will have, must be positive</span>
+      <span class="s4">@param </span><span class="s0">numMines   number of mines this minefield will have,  once we populate it.</span>
+      <span class="s0">PRE: numRows &gt; 0 and numCols &gt; 0 and 0 &lt;= numMines &lt; (1/3 of total number of field locations). </span>
+    <span class="s0">*/</span>
+   <span class="s2">public </span><span class="s1">MineField(</span><span class="s2">int </span><span class="s1">numRows, </span><span class="s2">int </span><span class="s1">numCols, </span><span class="s2">int </span><span class="s1">numMines) {</span>
+      <span class="s2">assert </span><span class="s1">numRows &gt; </span><span class="s3">0 </span><span class="s1">&amp;&amp; numCols &gt; </span><span class="s3">0</span><span class="s1">;</span>
+      <span class="s2">assert </span><span class="s3">0 </span><span class="s1">&lt;= numMines &amp;&amp; numMines &lt; ((numRows * numCols) / </span><span class="s3">3</span><span class="s1">);</span>
+
+      <span class="s1">minefieldData = </span><span class="s2">new boolean</span><span class="s1">[numRows][numCols];</span>
+
+      <span class="s1">resetEmpty();</span>
+
+      <span class="s1">mineRow = numRows;</span>
+      <span class="s1">mineCol = numCols;</span>
+
+      <span class="s1">mines = numMines;</span>
+   <span class="s1">}</span>
+   
+
+   <span class="s0">/**</span>
+      <span class="s0">Removes any current mines on the minefield, and puts numMines() mines in random locations on</span>
+      <span class="s0">the minefield, ensuring that no mine is placed at (row, col).</span>
+      <span class="s4">@param </span><span class="s0">row the row of the location to avoid placing a mine</span>
+      <span class="s4">@param </span><span class="s0">col the column of the location to avoid placing a mine</span>
+      <span class="s0">PRE: inRange(row, col) and numMines() &lt; (1/3 * numRows() * numCols())</span>
+    <span class="s0">*/</span>
+   <span class="s2">public void </span><span class="s1">populateMineField(</span><span class="s2">int </span><span class="s1">row, </span><span class="s2">int </span><span class="s1">col) {</span>
+      <span class="s2">assert </span><span class="s1">inRange(row, col) &amp;&amp; numMines() &lt; (mineRow * mineCol) / </span><span class="s3">3</span><span class="s1">;</span>
+
+      <span class="s1">resetEmpty();</span>
+
+      <span class="s1">Random genRow = </span><span class="s2">new </span><span class="s1">Random();</span>
+      <span class="s1">Random genCol = </span><span class="s2">new </span><span class="s1">Random();</span>
+      <span class="s2">int </span><span class="s1">r = </span><span class="s3">0</span><span class="s1">;</span>
+      <span class="s2">int </span><span class="s1">c = </span><span class="s3">0</span><span class="s1">;</span>
+
+      <span class="s2">int </span><span class="s1">countMines = </span><span class="s3">0</span><span class="s1">;</span>
+
+      <span class="s2">while </span><span class="s1">(countMines &lt;= numMines()) {</span>
+         <span class="s1">r = genRow.nextInt(mineRow);</span>
+         <span class="s1">c = genCol.nextInt(mineCol);</span>
+         <span class="s1">System.out.println(</span><span class="s5">&quot;r= &quot; </span><span class="s1">+ r + </span><span class="s5">&quot;c= &quot; </span><span class="s1">+ c);</span>
+         <span class="s2">if </span><span class="s1">(r != row &amp;&amp; c != col &amp;&amp; minefieldData[r][c] != </span><span class="s2">true</span><span class="s1">) {</span>
+            <span class="s1">minefieldData[r][c] = </span><span class="s2">true</span><span class="s1">;</span>
+            <span class="s1">countMines++;</span>
+         <span class="s1">}</span>
+      <span class="s1">}</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Reset the minefield to all empty squares.  This does not affect numMines(), numRows() or</span>
+      <span class="s0">numCols().  Thus, after this call, the actual number of mines in the minefield does not match</span>
+      <span class="s0">numMines().  </span>
+      <span class="s0">Note: This is the state a minefield created with the three-arg constructor is in at the </span>
+      <span class="s0">beginning of a game.</span>
+    <span class="s0">*/</span>
+   <span class="s2">public void </span><span class="s1">resetEmpty() {</span>
+      <span class="s2">for </span><span class="s1">(</span><span class="s2">boolean</span><span class="s1">[] row : minefieldData) {</span>
+         <span class="s1">Arrays.fill(row, </span><span class="s2">false</span><span class="s1">);</span>
+      <span class="s1">}</span>
+   <span class="s1">}</span>
+
+   
+  <span class="s0">/**</span>
+     <span class="s0">Returns the number of mines adjacent to the specified location (not counting a possible </span>
+     <span class="s0">mine at (row, col) itself).</span>
+     <span class="s0">Diagonals are also considered adjacent, so the return value will be in the range [0,8]</span>
+     <span class="s4">@param </span><span class="s0">row  row of the location to check</span>
+     <span class="s4">@param </span><span class="s0">col  column of the location to check</span>
+     <span class="s4">@return  </span><span class="s0">the number of mines adjacent to the square at (row, col)</span>
+     <span class="s0">PRE: inRange(row, col)</span>
+   <span class="s0">*/</span>
+   <span class="s2">public int </span><span class="s1">numAdjacentMines(</span><span class="s2">int </span><span class="s1">row, </span><span class="s2">int </span><span class="s1">col) {</span>
+      <span class="s2">assert </span><span class="s1">inRange(row, col);</span>
+
+      <span class="s2">int </span><span class="s1">totalAdj = </span><span class="s3">0</span><span class="s1">;</span>
+
+      <span class="s2">for </span><span class="s1">(</span><span class="s2">int </span><span class="s1">i = row - </span><span class="s3">1</span><span class="s1">; i &lt;= row + </span><span class="s3">1</span><span class="s1">; i++)</span>
+      <span class="s1">{</span>
+         <span class="s2">for </span><span class="s1">(</span><span class="s2">int </span><span class="s1">j = col - </span><span class="s3">1</span><span class="s1">; j &lt;= col + </span><span class="s3">1</span><span class="s1">; j++)</span>
+         <span class="s1">{</span>
+            <span class="s2">if </span><span class="s1">(inRange(row, col) &amp;&amp; hasMine(row, col) &amp;&amp; !(i == row &amp;&amp; j == col))</span>
+            <span class="s1">{</span>
+               <span class="s1">totalAdj++;</span>
+            <span class="s1">}</span>
+         <span class="s1">}</span>
+      <span class="s1">}</span>
+
+      <span class="s2">return </span><span class="s1">totalAdj;</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns true iff (row,col) is a valid field location.  Row numbers and column numbers</span>
+      <span class="s0">start from 0.</span>
+      <span class="s4">@param </span><span class="s0">row  row of the location to consider</span>
+      <span class="s4">@param </span><span class="s0">col  column of the location to consider</span>
+      <span class="s4">@return </span><span class="s0">whether (row, col) is a valid field location</span>
+   <span class="s0">*/</span>
+   <span class="s2">public boolean </span><span class="s1">inRange(</span><span class="s2">int </span><span class="s1">row, </span><span class="s2">int </span><span class="s1">col) {</span>
+      <span class="s2">boolean </span><span class="s1">valid = </span><span class="s2">false</span><span class="s1">;</span>
+
+      <span class="s2">if </span><span class="s1">((row &gt; </span><span class="s3">0 </span><span class="s1">&amp;&amp; row &lt;= mineRow) &amp;&amp; (col &gt; </span><span class="s3">0 </span><span class="s1">&amp;&amp; col &lt;= mineCol)) {</span>
+         <span class="s1">valid = </span><span class="s2">true</span><span class="s1">;</span>
+      <span class="s1">}</span>
+
+      <span class="s2">return </span><span class="s1">valid;</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns the number of rows in the field.</span>
+      <span class="s4">@return </span><span class="s0">number of rows in the field</span>
+   <span class="s0">*/  </span>
+   <span class="s2">public int </span><span class="s1">numRows() {</span>
+      <span class="s2">return </span><span class="s1">mineRow;</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns the number of columns in the field.</span>
+      <span class="s4">@return </span><span class="s0">number of columns in the field</span>
+   <span class="s0">*/    </span>
+   <span class="s2">public int </span><span class="s1">numCols() {</span>
+      <span class="s2">return </span><span class="s1">mineCol;</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns whether there is a mine in this square</span>
+      <span class="s4">@param </span><span class="s0">row  row of the location to check</span>
+      <span class="s4">@param </span><span class="s0">col  column of the location to check</span>
+      <span class="s4">@return </span><span class="s0">whether there is a mine in this square</span>
+      <span class="s0">PRE: inRange(row, col)   </span>
+   <span class="s0">*/    </span>
+   <span class="s2">public boolean </span><span class="s1">hasMine(</span><span class="s2">int </span><span class="s1">row, </span><span class="s2">int </span><span class="s1">col) {</span>
+      <span class="s2">boolean </span><span class="s1">isMine = </span><span class="s2">false</span><span class="s1">;</span>
+
+      <span class="s2">if </span><span class="s1">(minefieldData[row][col] == </span><span class="s2">true</span><span class="s1">) {</span>
+         <span class="s1">isMine = </span><span class="s2">true</span><span class="s1">;</span>
+      <span class="s1">}</span>
+
+      <span class="s2">return </span><span class="s1">isMine;</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns the number of mines you can have in this minefield.  For mines created with the 3-arg</span>
+      <span class="s0">constructor, some of the time this value does not match the actual number of mines currently</span>
+      <span class="s0">on the field.  See doc for that constructor, resetEmpty, and populateMineField for more</span>
+      <span class="s0">details.</span>
+      <span class="s4">@return </span><span class="s0">number of mines</span>
+    <span class="s0">*/</span>
+   <span class="s2">public int </span><span class="s1">numMines() {</span>
+      <span class="s2">return </span><span class="s1">mines;</span>
+   <span class="s1">}</span>
+
+   <span class="s0">/**</span>
+    <span class="s0">* Converts this minefield to a String.</span>
+    <span class="s0">* </span><span class="s4">@return </span><span class="s0">minefield as a String</span>
+    <span class="s0">*/</span>
+   <span class="s2">public </span><span class="s1">String toString() {</span>
+      <span class="s1">String result = </span><span class="s5">&quot;&quot;</span><span class="s1">;</span>
+
+      <span class="s2">for </span><span class="s1">(</span><span class="s2">boolean</span><span class="s1">[] row : minefieldData) {</span>
+         <span class="s1">result += Arrays.toString(row) + </span><span class="s5">&quot;</span><span class="s6">\n</span><span class="s5">&quot;</span><span class="s1">;</span>
+      <span class="s1">}</span>
+
+      <span class="s2">return </span><span class="s1">result;</span>
+   <span class="s1">}</span>
+
+   
+   <span class="s0">// &lt;put private methods here&gt;</span>
+         
+<span class="s1">}</span>
+
+</pre>
+</body>
+</html>

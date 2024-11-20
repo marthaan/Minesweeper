@@ -1,0 +1,205 @@
+<html>
+<head>
+<title>VisibleField.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #8c8c8c; font-style: italic;}
+.s1 { color: #080808;}
+.s2 { color: #0033b3;}
+.s3 { color: #1750eb;}
+.s4 { color: #8c8c8c; font-style: italic;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+VisibleField.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Name: Martha Ann Williams</span>
+<span class="s0">// USC NetID: marthaan</span>
+<span class="s0">// CS 455 PA3</span>
+<span class="s0">// Fall 2023</span>
+
+<span class="s2">import </span><span class="s1">java.util.Arrays;</span>
+
+<span class="s0">/**</span>
+  <span class="s0">VisibleField class</span>
+  <span class="s0">This is the data that's being displayed at any one point in the game (i.e., visible field, because</span>
+  <span class="s0">it's what the user can see about the minefield). Client can call getStatus(row, col) for any </span>
+  <span class="s0">square.  It actually has data about the whole current state of the game, including the underlying</span>
+  <span class="s0">minefield (getMineField()).  Other accessors related to game status: numMinesLeft(),</span>
+  <span class="s0">isGameOver().  It also has mutators related to actions the player could do (resetGameDisplay(),</span>
+  <span class="s0">cycleGuess(), uncover()), and changes the game state accordingly.</span>
+  
+  <span class="s0">It, along with the MineField (accessible in mineField instance variable), forms the Model for the</span>
+  <span class="s0">game application, whereas GameBoardPanel is the View and Controller in the MVC design pattern.  It</span>
+  <span class="s0">contains the MineField that it's partially displaying.  That MineField can be accessed</span>
+  <span class="s0">(or modified) from outside this class via the getMineField accessor.  </span>
+ <span class="s0">*/</span>
+<span class="s2">public class </span><span class="s1">VisibleField {</span>
+   <span class="s0">// ----------------------------------------------------------   </span>
+   <span class="s0">// The following public constants (plus values [0,8] mentioned in comments below) are the</span>
+   <span class="s0">// possible states of one location (a &quot;square&quot;) in the visible field (all are values that can be</span>
+   <span class="s0">// returned by public method getStatus(row, col)).</span>
+   
+   <span class="s0">// The following are the covered states (all negative values):</span>
+   <span class="s2">public static final int </span><span class="s1">COVERED = -</span><span class="s3">1</span><span class="s1">;   </span><span class="s0">// initial value of all squares</span>
+   <span class="s2">public static final int </span><span class="s1">MINE_GUESS = -</span><span class="s3">2</span><span class="s1">;</span>
+   <span class="s2">public static final int </span><span class="s1">QUESTION = -</span><span class="s3">3</span><span class="s1">;</span>
+
+   <span class="s0">// The following are the uncovered states (all non-negative values):</span>
+   
+   <span class="s0">// values in the range [0,8] corresponds to number of mines adjacent to this opened square</span>
+   
+   <span class="s2">public static final int </span><span class="s1">MINE = </span><span class="s3">9</span><span class="s1">;      </span><span class="s0">// this loc is a mine that hasn't been guessed already</span>
+                                          <span class="s0">// (end of losing game)</span>
+   <span class="s2">public static final int </span><span class="s1">INCORRECT_GUESS = </span><span class="s3">10</span><span class="s1">;  </span><span class="s0">// is displayed a specific way at the end of</span>
+                                                  <span class="s0">// losing game</span>
+   <span class="s2">public static final int </span><span class="s1">EXPLODED_MINE = </span><span class="s3">11</span><span class="s1">;   </span><span class="s0">// the one you uncovered by mistake (that caused</span>
+                                                 <span class="s0">// you to lose)</span>
+   <span class="s0">// ----------------------------------------------------------   </span>
+  
+   <span class="s0">// &lt;put instance variables here&gt;</span>
+   <span class="s2">private </span><span class="s1">MineField underlyingMineField;</span>
+   <span class="s2">private int</span><span class="s1">[][] states;</span>
+   <span class="s2">private boolean </span><span class="s1">gameOver;</span>
+   <span class="s2">private int </span><span class="s1">numGuesses;</span>
+
+   <span class="s0">/**</span>
+      <span class="s0">Create a visible field that has the given underlying mineField.</span>
+      <span class="s0">The initial state will have all the locations covered, no mines guessed, and the game not</span>
+      <span class="s0">over.</span>
+      <span class="s4">@param </span><span class="s0">mineField  the minefield to use for this VisibleField</span>
+    <span class="s0">*/</span>
+   <span class="s2">public </span><span class="s1">VisibleField(MineField mineField) {</span>
+      <span class="s1">underlyingMineField = mineField;</span>
+
+      <span class="s1">resetGameDisplay();</span>
+
+      <span class="s1">gameOver = </span><span class="s2">false</span><span class="s1">;</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Reset the object to its initial state (see constructor comments), using the same underlying</span>
+      <span class="s0">MineField. </span>
+   <span class="s0">*/     </span>
+   <span class="s2">public void </span><span class="s1">resetGameDisplay() {</span>
+      <span class="s2">for </span><span class="s1">(</span><span class="s2">int</span><span class="s1">[] array : states) {</span>
+         <span class="s1">Arrays.fill(array, -</span><span class="s3">1</span><span class="s1">);</span>
+      <span class="s1">}</span>
+   <span class="s1">}</span>
+  
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns a reference to the mineField that this VisibleField &quot;covers&quot;</span>
+      <span class="s4">@return </span><span class="s0">the minefield</span>
+    <span class="s0">*/</span>
+   <span class="s2">public </span><span class="s1">MineField getMineField() {</span>
+      <span class="s2">return </span><span class="s1">underlyingMineField;</span>
+   <span class="s1">}</span>
+   
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns the visible status of the square indicated.</span>
+      <span class="s4">@param </span><span class="s0">row  row of the square</span>
+      <span class="s4">@param </span><span class="s0">col  col of the square</span>
+      <span class="s4">@return </span><span class="s0">the status of the square at location (row, col).  See the public constants at the</span>
+            <span class="s0">beginning of the class for the possible values that may be returned, and their meanings.</span>
+      <span class="s0">PRE: getMineField().inRange(row, col)</span>
+    <span class="s0">*/</span>
+   <span class="s2">public int </span><span class="s1">getStatus(</span><span class="s2">int </span><span class="s1">row, </span><span class="s2">int </span><span class="s1">col) {</span>
+      <span class="s2">assert </span><span class="s1">getMineField().inRange(row, col);</span>
+
+      <span class="s2">return </span><span class="s1">states[row][col];</span>
+   <span class="s1">}</span>
+
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns the number of mines left to guess.  This has nothing to do with whether the mines</span>
+      <span class="s0">guessed are correct or not.  Just gives the user an indication of how many more mines the user</span>
+      <span class="s0">might want to guess.  This value will be negative if they have guessed more than the number of</span>
+      <span class="s0">mines in the minefield.     </span>
+      <span class="s4">@return </span><span class="s0">the number of mines left to guess.</span>
+    <span class="s0">*/</span>
+   <span class="s2">public int </span><span class="s1">numMinesLeft() {</span>
+      <span class="s2">return </span><span class="s1">underlyingMineField.numMines() - numGuesses;</span>
+   <span class="s1">}</span>
+ 
+   
+   <span class="s0">/**</span>
+      <span class="s0">Cycles through covered states for a square, updating number of guesses as necessary.  Call on</span>
+      <span class="s0">a COVERED square changes its status to MINE_GUESS; call on a MINE_GUESS square changes it to</span>
+      <span class="s0">QUESTION;  call on a QUESTION square changes it to COVERED again; call on an uncovered square</span>
+      <span class="s0">has no effect.  </span>
+      <span class="s4">@param </span><span class="s0">row  row of the square</span>
+      <span class="s4">@param </span><span class="s0">col  col of the square</span>
+      <span class="s0">PRE: getMineField().inRange(row, col)</span>
+    <span class="s0">*/</span>
+   <span class="s2">public void </span><span class="s1">cycleGuess(</span><span class="s2">int </span><span class="s1">row, </span><span class="s2">int </span><span class="s1">col) {</span>
+      <span class="s2">assert </span><span class="s1">getMineField().inRange(row, col);</span>
+
+      <span class="s2">if </span><span class="s1">(states[row][col] == COVERED) {</span>
+         <span class="s1">states[row][col] = MINE_GUESS;</span>
+         <span class="s1">numGuesses++;</span>
+      <span class="s1">}</span>
+      <span class="s2">else if </span><span class="s1">(states[row][col] == MINE_GUESS) {</span>
+         <span class="s1">states[row][col] = QUESTION;</span>
+      <span class="s1">}</span>
+      <span class="s2">else if </span><span class="s1">(states[row][col] == QUESTION) {</span>
+         <span class="s1">states[row][col] = COVERED;</span>
+      <span class="s1">}</span>
+   <span class="s1">}</span>
+
+   
+   <span class="s0">/**</span>
+      <span class="s0">Uncovers this square and returns false iff you uncover a mine here.</span>
+      <span class="s0">If the square wasn't a mine or adjacent to a mine it also uncovers all the squares in the</span>
+      <span class="s0">neighboring area that are also not next to any mines, possibly uncovering a large region.</span>
+      <span class="s0">Any mine-adjacent squares you reach will also be uncovered, and form (possibly along with</span>
+      <span class="s0">parts of the edge of the whole field) the boundary of this region.</span>
+      <span class="s0">Does not uncover, or keep searching through, squares that have the status MINE_GUESS. </span>
+      <span class="s0">Note: this action may cause the game to end: either in a win (opened all the non-mine squares)</span>
+      <span class="s0">or a loss (opened a mine).</span>
+      <span class="s4">@param </span><span class="s0">row  of the square</span>
+      <span class="s4">@param </span><span class="s0">col  of the square</span>
+      <span class="s4">@return </span><span class="s0">false   iff you uncover a mine at (row, col)</span>
+      <span class="s0">PRE: getMineField().inRange(row, col)</span>
+    <span class="s0">*/</span>
+   <span class="s2">public boolean </span><span class="s1">uncover(</span><span class="s2">int </span><span class="s1">row, </span><span class="s2">int </span><span class="s1">col) {</span>
+      <span class="s2">return false</span><span class="s1">;       </span><span class="s0">// DUMMY CODE so skeleton compiles</span>
+   <span class="s1">}</span>
+ 
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns whether the game is over.</span>
+      <span class="s0">(Note: This is not a mutator.)</span>
+      <span class="s4">@return </span><span class="s0">whether game has ended</span>
+    <span class="s0">*/</span>
+   <span class="s2">public boolean </span><span class="s1">isGameOver() {</span>
+      <span class="s2">return </span><span class="s1">gameOver;</span>
+   <span class="s1">}</span>
+ 
+   
+   <span class="s0">/**</span>
+      <span class="s0">Returns whether this square has been uncovered.  (i.e., is in any one of the uncovered states, </span>
+      <span class="s0">vs. any one of the covered states).</span>
+      <span class="s4">@param </span><span class="s0">row of the square</span>
+      <span class="s4">@param </span><span class="s0">col of the square</span>
+      <span class="s4">@return </span><span class="s0">whether the square is uncovered</span>
+      <span class="s0">PRE: getMineField().inRange(row, col)</span>
+    <span class="s0">*/</span>
+   <span class="s2">public boolean </span><span class="s1">isUncovered(</span><span class="s2">int </span><span class="s1">row, </span><span class="s2">int </span><span class="s1">col) {</span>
+      <span class="s2">assert </span><span class="s1">getMineField().inRange(row, col);</span>
+
+      <span class="s2">return </span><span class="s1">MINE &lt;= states[row][col] &amp;&amp; states[row][col] &lt;= EXPLODED_MINE;</span>
+   <span class="s1">}</span>
+   
+ 
+   <span class="s0">// &lt;put private methods here&gt;</span>
+   
+<span class="s1">}</span>
+</pre>
+</body>
+</html>
